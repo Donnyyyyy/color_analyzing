@@ -2,6 +2,7 @@ import random
 from PIL import Image, ImageColor, ImageDraw
 from io import BytesIO
 from math import sqrt
+from colour import Color
 
 def get_average_color(pic):
 	image = Image.open(pic)
@@ -82,6 +83,58 @@ def draw_color(path, color):
 	del draw
 
 	image.save(path, "PNG")
+
+def draw_colors(path, colors):
+	image = Image.new("RGBA", (len(colors) * 30, 30), (0,0,0,0))
+	draw = ImageDraw.Draw(image)
+
+	for i in range(0, len(colors)):
+		draw.rectangle((i * 30, 0, (1 + i) * 30, 30), colors[i])
+
+	del draw
+
+	image.save(path, "PNG")
+
+def draw_colors_gradient(path, colors):
+	gradient = colors_to_gradient_list(colors)
+
+	image = Image.new("RGBA", (len(gradient), 30), (0,0,0,0))
+	draw = ImageDraw.Draw(image)
+
+	for i in range(0, len(gradient)):
+		draw.line((i, 0, i, 30), to_255(gradient[i].rgb))
+
+	del draw
+
+	image.save(path, "PNG")
+
+def to_255(color):
+	return tuple([int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)])
+
+def from_255(color):
+	return tuple([color[0] / 255, color[1] / 255, color[2] / 255])
+
+def colors_to_gradient_list(colors):
+	gradient = []
+
+	prev_color = None
+	for color in colors:
+		if prev_color is None:
+			prev_color = Color(rgb=from_255(color))
+			for i in range(1, 30):
+				gradient.append(prev_color)
+			continue
+
+		curr_color = Color(rgb=from_255(color))
+		gradient.extend(list(prev_color.range_to(curr_color, 30)))
+
+		for i in range(1, 30):
+			gradient.append(curr_color)
+
+		prev_color = curr_color
+
+	return gradient
+
 
 if __name__ == '__main__':
 	print(get_average_color("temp.jpg"))

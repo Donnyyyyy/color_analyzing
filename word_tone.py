@@ -5,6 +5,7 @@ import nltk
 import colorsys
 from bs4 import BeautifulSoup
 from math import sqrt
+from colorthief import ColorThief
 
 def download_pic(query, num_samples=7):
 
@@ -17,6 +18,24 @@ def download_pic(query, num_samples=7):
 	links = soup.find_all("img")
  
 	return [i["src"] for i in links[1:num_samples+1]]
+
+def word_color_thieft(word, save_image=True, num_samples=1):
+	for url in download_pic(word, num_samples=num_samples):
+		# for pair in nltk.pos_tag(word, tagset='universal'):
+		# 	#print(pair)
+		# 	if pair[1] in ("PRON", "ADP", "CONJ", "PRT"):
+		# 		print(word + " is " + str(pair[1]))
+		# 		return (220, 220, 220)
+
+		picture, headers = rq.urlretrieve(url)
+		color_thief = ColorThief(picture)
+		dominant_color = color_thief.get_color(quality=1)
+
+		if save_image:
+			ap.draw_color("./colors/"+word+"_thieft", dominant_color)
+
+	return dominant_color
+
 
 def word_color_weighted(word):
 
@@ -117,7 +136,27 @@ def text2color(wc_table, text):
 
 	return (r, g, b)
 
+def get_valuable_words(sentence):
+	for pair in nltk.pos_tag(sentence, tagset='universal'):
+		#print(pair)
+		if pair[1] in ("PRON", "ADP", "CONJ", "PRT"):
+			sentence.remove(pair[0])
+
+	return sentence
+
+def sentence_tone(sentence, save_image=True):
+	sentence = get_valuable_words(sentence)
+	colors = []
+
+	for word in sentence:
+		colors.append(word_color_thieft(word))
+
+	if save_image:
+		ap.draw_colors_gradient('./colors/' + '_'.join(sentence), colors)
+
+	return colors[0]
+
 if __name__ == '__main__':
-	for word in ("luck", "hate", "love", "happiness", "like"):
-		word_color(word)
-		word_color_weighted(word)
+	while True:
+		sentence = input("Your sentence: ").split()
+		sentence_tone(sentence)
